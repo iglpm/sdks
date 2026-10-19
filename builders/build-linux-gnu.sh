@@ -54,7 +54,7 @@ case "$TARGET" in
     powerpc64-unknown-linux-gnu)
         DEB_ARCH="ppc64"
         GNU_TRIPLE="powerpc64-linux-gnu"
-        PACKAGES="libc6-dev-powerpc64-cross libc6-powerpc64-cross"
+        PACKAGES="libc6-dev-ppc64-cross libc6-ppc64-cross"
         ;;
     powerpc-unknown-linux-gnu)
         DEB_ARCH="powerpc"

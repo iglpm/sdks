@@ -14,10 +14,10 @@ if [ -z "$TARGET" ]; then
 fi
 
 case "$TARGET" in
-    *-unknown-linux-gnu)
+    *-unknown-linux-gnu|*-unknown-linux-gnueabi|*-unknown-linux-gnueabihf)
         "$DIR/build-linux-gnu.sh" "$TARGET" "$OUT_DIR"
         ;;
-    *-unknown-linux-musl)
+    *-unknown-linux-musl|*-unknown-linux-musleabi|*-unknown-linux-musleabihf)
         "$DIR/build-linux-musl.sh" "$TARGET" "$OUT_DIR"
         ;;
     *-pc-windows-gnu|*-pc-windows-gnullvm)
