@@ -79,11 +79,18 @@ for clang_ver in "$CLANG_LIB_DIR"/*; do
     fi
 done
 
-# Ensure API 21+ libraries and start files (crtbegin/crtend) are at usr/lib root
+# Ensure API 21+ libraries and start files (crtbegin/crtend) are at usr/lib root with relative symlinks
 DEFAULT_API="21"
 if [ -d "$SYSROOT/usr/lib/$DEFAULT_API" ]; then
-    cp -s -a "$SYSROOT/usr/lib/$DEFAULT_API"/* "$SYSROOT/usr/lib/" 2>/dev/null || \
-    cp -a "$SYSROOT/usr/lib/$DEFAULT_API"/* "$SYSROOT/usr/lib/" 2>/dev/null || true
+    (
+        cd "$SYSROOT/usr/lib"
+        for item in "$DEFAULT_API"/*; do
+            base="$(basename "$item")"
+            if [ ! -e "$base" ]; then
+                ln -sf "$DEFAULT_API/$base" "$base"
+            fi
+        done
+    )
 fi
 
 clean_sysroot "$SYSROOT"
