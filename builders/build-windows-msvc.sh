@@ -18,12 +18,15 @@ mkdir -p "$SYSROOT/lib" "$SYSROOT/include" "$SYSROOT/ucrt" "$SYSROOT/um"
 case "$TARGET" in
     x86_64-pc-windows-msvc)
         ARCH_DIR="x64"
+        XWIN_ARCH="x86_64"
         ;;
     aarch64-pc-windows-msvc)
         ARCH_DIR="arm64"
+        XWIN_ARCH="aarch64"
         ;;
     i686-pc-windows-msvc)
         ARCH_DIR="x86"
+        XWIN_ARCH="x86"
         ;;
     *)
         log_err "Unknown Windows MSVC target: $TARGET"
@@ -42,8 +45,8 @@ if ! command -v xwin >/dev/null 2>&1; then
 fi
 
 if command -v xwin >/dev/null 2>&1; then
-    log "Running xwin unpack..."
-    xwin --accept-license --arch "$ARCH_DIR" splat --output "$SYSROOT"
+    log "Running xwin splat for $XWIN_ARCH..."
+    xwin --accept-license --arch "$XWIN_ARCH" splat --output "$SYSROOT"
 else
     log_warn "xwin not available on PATH; creating minimal stub MSVC layout"
     mkdir -p "$SYSROOT/lib/$ARCH_DIR"

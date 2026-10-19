@@ -95,10 +95,28 @@ jobs:
           path: dist/${{ matrix.target }}.tar.xz
           retention-days: 7
 
+  build-macos:
+    name: Build macOS SDK (osxcross approach)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package macOS SDK
+        run: |
+          mkdir -p dist
+          ./builders/build-macos.sh "MacOSX.sdk" dist
+
+      - name: Upload macOS SDK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdk-macos
+          path: dist/*.tar.xz
+          retention-days: 7
+
   release:
     name: Publish GitHub Release
     if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.release == 'true'
-    needs: build
+    needs: [build, build-macos]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4

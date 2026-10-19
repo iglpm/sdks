@@ -32,9 +32,8 @@ case "$TARGET" in
     *-unknown-freebsd)
         "$DIR/build-freebsd.sh" "$TARGET" "$OUT_DIR"
         ;;
-    *-apple-darwin)
-        log "macOS SDK ($TARGET) is packaged from official Apple Command Line Tools / Xcode."
-        log "See scripts/macos-sdk.sh for extraction instructions."
+    *-apple-darwin|MacOSX.sdk)
+        "$DIR/build-macos.sh" "$TARGET" "$OUT_DIR"
         ;;
     wasm32-*|thumbv*|riscv32imc-*)
         log "$TARGET is a self-contained target that links without an external C SDK."
