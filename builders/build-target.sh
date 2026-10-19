@@ -7,6 +7,8 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 TARGET="${1:-}"
 OUT_DIR="${2:-dist}"
+mkdir -p "$OUT_DIR"
+OUT_DIR="$(cd "$OUT_DIR" && pwd)"
 
 if [ -z "$TARGET" ]; then
     echo "Usage: $0 <target-triple> [out_dir]" >&2

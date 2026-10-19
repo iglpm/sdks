@@ -67,12 +67,21 @@ pack_tarball() {
     local abs_out
     abs_out="$(cd "$(dirname "$out_tar")" && pwd)/$(basename "$out_tar")"
 
+    # Verify src_dir contains files
+    local file_count
+    file_count="$(find "$src_dir" -type f | wc -l)"
+    if [ "$file_count" -lt 5 ]; then
+        log_err "Sysroot at $src_dir is almost empty (found only $file_count files)! Refusing to package an empty SDK."
+    fi
+
     local tmp_tar
     tmp_tar="$(mktemp -u --tmpdir "tarball-XXXXXX.tar.xz")"
 
-    log "Compressing $src_dir -> $out_tar ..."
+    log "Compressing $src_dir ($file_count files) -> $out_tar ..."
     # Deterministic tar with xz high compression written outside src_dir
     XZ_OPT="-9e -T0" tar -C "$src_dir" -cJf "$tmp_tar" .
     mv -f "$tmp_tar" "$abs_out"
+    test -f "$abs_out"
+
     log_step "Created $out_tar ($(du -h "$abs_out" | cut -f1))"
 }

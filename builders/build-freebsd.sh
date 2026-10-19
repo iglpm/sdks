@@ -37,6 +37,7 @@ fetch_any "$BASE_TXZ" \
     "https://archive.freebsd.org/old-releases/${MACHINE}/${RELEASE}/base.txz"
 
 log "Extracting FreeBSD sysroot..."
+tar -xJf "$BASE_TXZ" -C "$SYSROOT" lib usr/lib usr/include 2>/dev/null || \
 tar -xJf "$BASE_TXZ" -C "$SYSROOT" ./lib ./usr/lib ./usr/include
 
 clean_sysroot "$SYSROOT"

@@ -24,7 +24,7 @@ case "$TARGET" in
     i686-unknown-linux-gnu)
         DEB_ARCH="i386"
         GNU_TRIPLE="i386-linux-gnu"
-        PACKAGES="libc6-dev-i386-cross libc6-i386-cross"
+        PACKAGES="libc6-dev-i386-cross libc6-i386-cross libc6-dev-i386 gcc-multilib"
         ;;
     aarch64-unknown-linux-gnu)
         DEB_ARCH="arm64"
@@ -101,6 +101,39 @@ if [ -d "/usr/include/$GNU_TRIPLE" ]; then
 fi
 if [ -d "/lib/$GNU_TRIPLE" ]; then
     cp -a /lib/"$GNU_TRIPLE"/. "$SYSROOT/lib/" 2>/dev/null || true
+fi
+
+# For i386 / 32-bit x86, libc6-dev-i386 installs into /usr/lib32 and /usr/include
+if [ "$TARGET" = "i686-unknown-linux-gnu" ]; then
+    if [ -d "/usr/lib32" ]; then
+        cp -a /usr/lib32/. "$SYSROOT/usr/lib/" 2>/dev/null || true
+    fi
+    if [ -d "/usr/include" ]; then
+        # Copy standard headers if sysroot headers are missing
+        cp -a /usr/include/{stdio.h,stdlib.h,string.h,unistd.h,features.h,errno.h,fcntl.h,sys,bits,gnu} "$SYSROOT/usr/include/" 2>/dev/null || true
+    fi
+fi
+
+# For x86_64, copy host libraries & headers if empty
+if [ "$TARGET" = "x86_64-unknown-linux-gnu" ]; then
+    if [ -d "/usr/lib/x86_64-linux-gnu" ]; then
+        cp -a /usr/lib/x86_64-linux-gnu/. "$SYSROOT/usr/lib/" 2>/dev/null || true
+    fi
+    if [ -d "/usr/include" ]; then
+        cp -a /usr/include/. "$SYSROOT/usr/include/" 2>/dev/null || true
+    fi
+    if [ -d "/lib/x86_64-linux-gnu" ]; then
+        cp -a /lib/x86_64-linux-gnu/. "$SYSROOT/lib/" 2>/dev/null || true
+    fi
+fi
+
+# Validate sysroot has minimal linking components
+if [ ! -f "$SYSROOT/usr/lib/crt1.o" ] && [ ! -f "$SYSROOT/usr/lib/libc.so" ] && [ ! -f "$SYSROOT/usr/lib/libc.a" ]; then
+    # Search system for target crt1.o or libc.so and copy
+    find /usr -name "crt1.o" 2>/dev/null | grep -E "$GNU_TRIPLE|i386|x86_64" | head -n 1 | while read -r f; do
+        d="$(dirname "$f")"
+        cp -a "$d"/. "$SYSROOT/usr/lib/" 2>/dev/null || true
+    done
 fi
 
 # Ensure standard symlinks exist
