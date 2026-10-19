@@ -25,7 +25,6 @@ case "$TARGET" in
         PACKAGES="mingw-w64-i686-dev g++-mingw-w64-i686"
         ;;
     aarch64-pc-windows-gnullvm)
-        # Ubuntu does not package aarch64 MinGW libraries. Fetch llvm-mingw sysroot.
         log "Downloading llvm-mingw sysroot for ARM64 Windows..."
         LLVM_MINGW_URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-ubuntu-22.04-x86_64.tar.xz"
         fetch "$LLVM_MINGW_URL" "$WORK/llvm-mingw.tar.xz"
@@ -35,13 +34,34 @@ case "$TARGET" in
             cp -a "$LLVM_ROOT/aarch64-w64-mingw32/include/." "$SYSROOT/usr/include/"
             cp -a "$LLVM_ROOT/aarch64-w64-mingw32/lib/." "$SYSROOT/usr/lib/"
         fi
+        # Rust gnullvm toolchain links with -lgcc and -lgcc_eh; llvm-mingw uses libunwind
+        if [ -f "$SYSROOT/usr/lib/libunwind.a" ]; then
+            ln -sf libunwind.a "$SYSROOT/usr/lib/libgcc.a"
+            ln -sf libunwind.a "$SYSROOT/usr/lib/libgcc_eh.a"
+            ln -sf libunwind.a "$SYSROOT/usr/lib/libgcc_s.a"
+        fi
         clean_sysroot "$SYSROOT"
         pack_tarball "$SYSROOT" "$OUT_DIR/${TARGET}.tar.xz"
         exit 0
         ;;
     x86_64-pc-windows-gnullvm)
-        MINGW_TRIPLE="x86_64-w64-mingw32"
-        PACKAGES="mingw-w64-x86-64-dev g++-mingw-w64-x86-64"
+        log "Downloading llvm-mingw sysroot for x86_64 Windows..."
+        LLVM_MINGW_URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-ubuntu-22.04-x86_64.tar.xz"
+        fetch "$LLVM_MINGW_URL" "$WORK/llvm-mingw.tar.xz"
+        tar -xf "$WORK/llvm-mingw.tar.xz" -C "$WORK"
+        LLVM_ROOT="$(find "$WORK" -maxdepth 1 -type d -name "llvm-mingw*")"
+        if [ -d "$LLVM_ROOT/x86_64-w64-mingw32" ]; then
+            cp -a "$LLVM_ROOT/x86_64-w64-mingw32/include/." "$SYSROOT/usr/include/"
+            cp -a "$LLVM_ROOT/x86_64-w64-mingw32/lib/." "$SYSROOT/usr/lib/"
+        fi
+        if [ -f "$SYSROOT/usr/lib/libunwind.a" ]; then
+            ln -sf libunwind.a "$SYSROOT/usr/lib/libgcc.a"
+            ln -sf libunwind.a "$SYSROOT/usr/lib/libgcc_eh.a"
+            ln -sf libunwind.a "$SYSROOT/usr/lib/libgcc_s.a"
+        fi
+        clean_sysroot "$SYSROOT"
+        pack_tarball "$SYSROOT" "$OUT_DIR/${TARGET}.tar.xz"
+        exit 0
         ;;
     *)
         log_err "Unknown Windows GNU target: $TARGET"

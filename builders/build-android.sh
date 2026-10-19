@@ -54,5 +54,37 @@ if [ -d "$LLVM_SYSROOT/usr/lib/$ARCH_SUBDIR" ]; then
     cp -a "$LLVM_SYSROOT/usr/lib/$ARCH_SUBDIR/." "$SYSROOT/usr/lib/"
 fi
 
+# Copy libunwind and compiler builtins from Clang runtime
+CLANG_LIB_DIR="$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/lib/clang"
+for clang_ver in "$CLANG_LIB_DIR"/*; do
+    if [ -d "$clang_ver/lib/linux" ]; then
+        case "$TARGET" in
+            aarch64-linux-android)
+                [ -f "$clang_ver/lib/linux/aarch64/libunwind.a" ] && cp -a "$clang_ver/lib/linux/aarch64/libunwind.a" "$SYSROOT/usr/lib/" || true
+                [ -f "$clang_ver/lib/linux/libclang_rt.builtins-aarch64-android.a" ] && cp -a "$clang_ver/lib/linux/libclang_rt.builtins-aarch64-android.a" "$SYSROOT/usr/lib/" || true
+                ;;
+            armv7-linux-androideabi)
+                [ -f "$clang_ver/lib/linux/arm/libunwind.a" ] && cp -a "$clang_ver/lib/linux/arm/libunwind.a" "$SYSROOT/usr/lib/" || true
+                [ -f "$clang_ver/lib/linux/libclang_rt.builtins-arm-android.a" ] && cp -a "$clang_ver/lib/linux/libclang_rt.builtins-arm-android.a" "$SYSROOT/usr/lib/" || true
+                ;;
+            x86_64-linux-android)
+                [ -f "$clang_ver/lib/linux/x86_64/libunwind.a" ] && cp -a "$clang_ver/lib/linux/x86_64/libunwind.a" "$SYSROOT/usr/lib/" || true
+                [ -f "$clang_ver/lib/linux/libclang_rt.builtins-x86_64-android.a" ] && cp -a "$clang_ver/lib/linux/libclang_rt.builtins-x86_64-android.a" "$SYSROOT/usr/lib/" || true
+                ;;
+            i686-linux-android)
+                [ -f "$clang_ver/lib/linux/i386/libunwind.a" ] && cp -a "$clang_ver/lib/linux/i386/libunwind.a" "$SYSROOT/usr/lib/" || true
+                [ -f "$clang_ver/lib/linux/libclang_rt.builtins-i686-android.a" ] && cp -a "$clang_ver/lib/linux/libclang_rt.builtins-i686-android.a" "$SYSROOT/usr/lib/" || true
+                ;;
+        esac
+    fi
+done
+
+# Ensure API 21+ libraries and start files (crtbegin/crtend) are at usr/lib root
+DEFAULT_API="21"
+if [ -d "$SYSROOT/usr/lib/$DEFAULT_API" ]; then
+    cp -s -a "$SYSROOT/usr/lib/$DEFAULT_API"/* "$SYSROOT/usr/lib/" 2>/dev/null || \
+    cp -a "$SYSROOT/usr/lib/$DEFAULT_API"/* "$SYSROOT/usr/lib/" 2>/dev/null || true
+fi
+
 clean_sysroot "$SYSROOT"
 pack_tarball "$SYSROOT" "$OUT_DIR/${TARGET}.tar.xz"

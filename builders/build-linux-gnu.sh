@@ -29,52 +29,52 @@ case "$TARGET" in
     aarch64-unknown-linux-gnu)
         DEB_ARCH="arm64"
         GNU_TRIPLE="aarch64-linux-gnu"
-        PACKAGES="libc6-dev-arm64-cross libc6-arm64-cross"
+        PACKAGES="libc6-dev-arm64-cross libc6-arm64-cross libgcc-s1-arm64-cross libgcc-13-dev-arm64-cross"
         ;;
     armv7-unknown-linux-gnueabihf)
         DEB_ARCH="armhf"
         GNU_TRIPLE="arm-linux-gnueabihf"
-        PACKAGES="libc6-dev-armhf-cross libc6-armhf-cross"
+        PACKAGES="libc6-dev-armhf-cross libc6-armhf-cross libgcc-s1-armhf-cross libgcc-13-dev-armhf-cross"
         ;;
     arm-unknown-linux-gnueabi)
         DEB_ARCH="armel"
         GNU_TRIPLE="arm-linux-gnueabi"
-        PACKAGES="libc6-dev-armel-cross libc6-armel-cross"
+        PACKAGES="libc6-dev-armel-cross libc6-armel-cross libgcc-s1-armel-cross libgcc-13-dev-armel-cross"
         ;;
     riscv64gc-unknown-linux-gnu)
         DEB_ARCH="riscv64"
         GNU_TRIPLE="riscv64-linux-gnu"
-        PACKAGES="libc6-dev-riscv64-cross libc6-riscv64-cross"
+        PACKAGES="libc6-dev-riscv64-cross libc6-riscv64-cross libgcc-s1-riscv64-cross libgcc-13-dev-riscv64-cross"
         ;;
     powerpc64le-unknown-linux-gnu)
         DEB_ARCH="ppc64el"
         GNU_TRIPLE="powerpc64le-linux-gnu"
-        PACKAGES="libc6-dev-ppc64el-cross libc6-ppc64el-cross"
+        PACKAGES="libc6-dev-ppc64el-cross libc6-ppc64el-cross libgcc-s1-ppc64el-cross libgcc-13-dev-ppc64el-cross"
         ;;
     powerpc64-unknown-linux-gnu)
         DEB_ARCH="ppc64"
         GNU_TRIPLE="powerpc64-linux-gnu"
-        PACKAGES="libc6-dev-ppc64-cross libc6-ppc64-cross"
+        PACKAGES="libc6-dev-ppc64-cross libc6-ppc64-cross libgcc-s1-ppc64-cross libgcc-13-dev-ppc64-cross"
         ;;
     powerpc-unknown-linux-gnu)
         DEB_ARCH="powerpc"
         GNU_TRIPLE="powerpc-linux-gnu"
-        PACKAGES="libc6-dev-powerpc-cross libc6-powerpc-cross"
+        PACKAGES="libc6-dev-powerpc-cross libc6-powerpc-cross libgcc-s1-powerpc-cross libgcc-13-dev-powerpc-cross"
         ;;
     s390x-unknown-linux-gnu)
         DEB_ARCH="s390x"
         GNU_TRIPLE="s390x-linux-gnu"
-        PACKAGES="libc6-dev-s390x-cross libc6-s390x-cross"
+        PACKAGES="libc6-dev-s390x-cross libc6-s390x-cross libgcc-s1-s390x-cross libgcc-13-dev-s390x-cross"
         ;;
     sparc64-unknown-linux-gnu)
         DEB_ARCH="sparc64"
         GNU_TRIPLE="sparc64-linux-gnu"
-        PACKAGES="libc6-dev-sparc64-cross libc6-sparc64-cross"
+        PACKAGES="libc6-dev-sparc64-cross libc6-sparc64-cross libgcc-s1-sparc64-cross libgcc-13-dev-sparc64-cross"
         ;;
     loongarch64-unknown-linux-gnu)
         DEB_ARCH="loong64"
         GNU_TRIPLE="loongarch64-linux-gnu"
-        PACKAGES="libc6-dev-loong64-cross libc6-loong64-cross"
+        PACKAGES="libc6-dev-loong64-cross libc6-loong64-cross libgcc-s1-loong64-cross libgcc-13-dev-loong64-cross"
         ;;
     *)
         log_err "Unknown Linux GNU target: $TARGET"
@@ -101,6 +101,17 @@ if [ -d "/usr/include/$GNU_TRIPLE" ]; then
 fi
 if [ -d "/lib/$GNU_TRIPLE" ]; then
     cp -a /lib/"$GNU_TRIPLE"/. "$SYSROOT/lib/" 2>/dev/null || true
+fi
+
+# Copy libgcc and crtbegin/crtend from gcc-cross
+if [ -d "/usr/lib/gcc-cross/$GNU_TRIPLE" ]; then
+    for vdir in /usr/lib/gcc-cross/"$GNU_TRIPLE"/*; do
+        if [ -d "$vdir" ]; then
+            cp -a "$vdir"/*.a "$SYSROOT/usr/lib/" 2>/dev/null || true
+            cp -a "$vdir"/*.o "$SYSROOT/usr/lib/" 2>/dev/null || true
+            cp -a "$vdir"/*.so "$SYSROOT/usr/lib/" 2>/dev/null || true
+        fi
+    done
 fi
 
 # For i386 / 32-bit x86, libc6-dev-i386 installs into /usr/lib32 and /usr/include

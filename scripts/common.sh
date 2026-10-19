@@ -42,6 +42,9 @@ fetch_any() {
 }
 
 apt_install() {
+    sudo apt-get update -qq || true
+    sudo apt-get install -y --no-install-recommends software-properties-common -qq 2>/dev/null || true
+    sudo add-apt-repository -y universe 2>/dev/null || true
     sudo apt-get update -qq
     sudo apt-get install -y --no-install-recommends -qq "$@"
 }
