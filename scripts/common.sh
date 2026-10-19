@@ -76,8 +76,15 @@ pack_tarball() {
     local out_tar="$2"
     mkdir -p "$(dirname "$out_tar")"
 
+    local abs_out
+    abs_out="$(cd "$(dirname "$out_tar")" && pwd)/$(basename "$out_tar")"
+
+    local tmp_tar
+    tmp_tar="$(mktemp -u --tmpdir "tarball-XXXXXX.tar.xz")"
+
     log "Compressing $src_dir -> $out_tar ..."
-    # Deterministic tar with xz high compression
-    XZ_OPT="-9e -T0" tar -C "$src_dir" -cJf "$out_tar" .
-    log_step "Created $out_tar ($(du -h "$out_tar" | cut -f1))"
+    # Deterministic tar with xz high compression written outside src_dir
+    XZ_OPT="-9e -T0" tar -C "$src_dir" -cJf "$tmp_tar" .
+    mv -f "$tmp_tar" "$abs_out"
+    log_step "Created $out_tar ($(du -h "$abs_out" | cut -f1))"
 }
