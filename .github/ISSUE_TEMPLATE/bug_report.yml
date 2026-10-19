@@ -1,0 +1,30 @@
+name: Bug Report
+description: Create a report to help us improve the SDK sysroots
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug report! Please provide as much detail as possible.
+  - type: input
+    id: target
+    attributes:
+      label: Target Triple
+      description: Which cross target is experiencing issues?
+      placeholder: e.g. aarch64-unknown-linux-gnu
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What went wrong when linking or compiling with this SDK?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Linker / Compiler Output
+      description: Paste any error messages or logs from hyprcross or hyprlnk.
+      render: shell

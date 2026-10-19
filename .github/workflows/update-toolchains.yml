@@ -1,0 +1,48 @@
+name: Update Toolchains
+
+on:
+  schedule:
+    # Run every Monday morning at 03:00 UTC
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-updates:
+    name: Check upstream updates
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: updates
+        name: Check upstream toolchain updates
+        run: |
+          changes="$(./scripts/update-upstream.sh)"
+          {
+            echo "changes<<EOF"
+            echo "$changes"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "${changes:-Upstream toolchains are up to date}"
+
+      - name: Create Pull Request for updates
+        if: steps.updates.outputs.changes != ''
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: bot/update-toolchains
+          delete-branch: true
+          title: "chore: update upstream toolchains and sysroot pins"
+          commit-message: |
+            chore: update upstream toolchains
+
+            ${{ steps.updates.outputs.changes }}
+          body: |
+            Automated upstream toolchain version bump:
+
+            ```
+            ${{ steps.updates.outputs.changes }}
+            ```

@@ -1,0 +1,24 @@
+name: Feature / Target Request
+description: Request a new target SDK sysroot or library addition
+title: "feat(target): "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Request new target sysroots or additional packages in an existing SDK.
+  - type: input
+    id: target
+    attributes:
+      label: Target Triple
+      description: The Rust / LLVM target triple
+      placeholder: e.g. riscv32imac-unknown-none-elf
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation & Details
+      description: Why is this target needed and what libraries/headers are required?
+    validations:
+      required: true
