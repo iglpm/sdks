@@ -67,6 +67,16 @@ if curl --fail --location --retry 3 -sS -o "$TGZ_FILE" "$PREBUILT_URL" 2>/dev/nu
         cp -a "$EXTRACTED_DIR"/include/. "$SYSROOT/usr/include/"
         cp -a "$EXTRACTED_DIR"/lib/. "$SYSROOT/usr/lib/"
     fi
+    # Also copy libgcc and crtbegin/crtend from lib/gcc/<target>/<version>/
+    GCC_LIB_DIR="$WORK/${MUSL_TARGET}-cross/lib/gcc/${MUSL_TARGET}"
+    if [ -d "$GCC_LIB_DIR" ]; then
+        for vdir in "$GCC_LIB_DIR"/*; do
+            if [ -d "$vdir" ]; then
+                cp -a "$vdir"/*.a "$SYSROOT/usr/lib/" 2>/dev/null || true
+                cp -a "$vdir"/*.o "$SYSROOT/usr/lib/" 2>/dev/null || true
+            fi
+        done
+    fi
 else
     log_warn "musl.cc prebuilt unavailable, building from source via musl-cross-make..."
     apt_install build-essential bison flex texinfo rsync
