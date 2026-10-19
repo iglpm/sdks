@@ -55,17 +55,28 @@ case "$TARGET" in
         ;;
 esac
 
-log "Building musl sysroot for $TARGET ($MUSL_TARGET)..."
+log "Fetching musl sysroot for $TARGET ($MUSL_TARGET)..."
 
-apt_install build-essential bison flex texinfo rsync
+PREBUILT_URL="https://musl.cc/${MUSL_TARGET}-cross.tgz"
+TGZ_FILE="$WORK/musl-cross.tgz"
 
-MCM_DIR="$WORK/musl-cross-make"
-mkdir -p "$MCM_DIR"
-fetch "https://github.com/richfelker/musl-cross-make/archive/${MCM_COMMIT}.tar.gz" "$WORK/mcm.tar.gz"
-tar -xzf "$WORK/mcm.tar.gz" -C "$MCM_DIR" --strip-components=1
+if curl --fail --location --retry 3 -sS -o "$TGZ_FILE" "$PREBUILT_URL" 2>/dev/null; then
+    tar -xzf "$TGZ_FILE" -C "$WORK"
+    EXTRACTED_DIR="$WORK/${MUSL_TARGET}-cross/${MUSL_TARGET}"
+    if [ -d "$EXTRACTED_DIR" ]; then
+        cp -a "$EXTRACTED_DIR"/include/. "$SYSROOT/usr/include/"
+        cp -a "$EXTRACTED_DIR"/lib/. "$SYSROOT/usr/lib/"
+    fi
+else
+    log_warn "musl.cc prebuilt unavailable, building from source via musl-cross-make..."
+    apt_install build-essential bison flex texinfo rsync
+    MCM_DIR="$WORK/musl-cross-make"
+    mkdir -p "$MCM_DIR"
+    fetch "https://github.com/richfelker/musl-cross-make/archive/${MCM_COMMIT}.tar.gz" "$WORK/mcm.tar.gz"
+    tar -xzf "$WORK/mcm.tar.gz" -C "$MCM_DIR" --strip-components=1
 
-PREFIX="$WORK/prefix"
-cat > "$MCM_DIR/config.mak" <<EOF
+    PREFIX="$WORK/prefix"
+    cat > "$MCM_DIR/config.mak" <<EOF
 TARGET = ${MUSL_TARGET}
 OUTPUT = ${PREFIX}
 GCC_VER = ${GCC_VER}
@@ -76,14 +87,12 @@ DL_CMD = curl --fail --location --silent --show-error --retry 5 --retry-delay 5 
 COMMON_CONFIG += CFLAGS="-g0 -O2" CXXFLAGS="-g0 -O2" LDFLAGS="-s"
 GCC_CONFIG += --enable-languages=c,c++ --disable-libsanitizer --disable-multilib ${EXTRA_FLAGS}
 EOF
-
-make -C "$MCM_DIR" -j"$(nproc)" install
-
-# Copy sysroot from the built toolchain
-TARGET_SYSROOT="$PREFIX/$MUSL_TARGET"
-if [ -d "$TARGET_SYSROOT" ]; then
-    cp -a "$TARGET_SYSROOT"/include/. "$SYSROOT/usr/include/" 2>/dev/null || true
-    cp -a "$TARGET_SYSROOT"/lib/. "$SYSROOT/usr/lib/" 2>/dev/null || true
+    make -C "$MCM_DIR" -j"$(nproc)" install
+    TARGET_SYSROOT="$PREFIX/$MUSL_TARGET"
+    if [ -d "$TARGET_SYSROOT" ]; then
+        cp -a "$TARGET_SYSROOT"/include/. "$SYSROOT/usr/include/" 2>/dev/null || true
+        cp -a "$TARGET_SYSROOT"/lib/. "$SYSROOT/usr/lib/" 2>/dev/null || true
+    fi
 fi
 
 # Fix ld-musl symlinks

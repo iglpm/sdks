@@ -54,18 +54,6 @@ clean_sysroot() {
     rm -rf "$root"/usr/share/{doc,man,info,locale,zoneinfo} 2>/dev/null || true
     rm -rf "$root"/share/{doc,man,info,locale} 2>/dev/null || true
 
-    # Remove static libraries not required for linking
-    find "$root" -type f -name "*.a" \
-        -not -name "libc.a" \
-        -not -name "libm.a" \
-        -not -name "libpthread.a" \
-        -not -name "librt.a" \
-        -not -name "libdl.a" \
-        -not -name "libresolv.a" \
-        -not -name "libutil.a" \
-        -not -name "libcrypt.a" \
-        -delete 2>/dev/null || true
-
     # Strip debugging symbols from shared libraries
     find "$root" -type f -name "*.so*" -exec strip --strip-unneeded {} + 2>/dev/null || true
     find "$root" -type f -name "*.dylib" -exec strip -x {} + 2>/dev/null || true

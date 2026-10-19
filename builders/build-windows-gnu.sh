@@ -24,15 +24,24 @@ case "$TARGET" in
         MINGW_TRIPLE="i686-w64-mingw32"
         PACKAGES="mingw-w64-i686-dev g++-mingw-w64-i686"
         ;;
-    x86_64-pc-windows-gnullvm|aarch64-pc-windows-gnullvm)
-        # LLVM MinGW targets use standard MinGW-w64 headers and CRT libraries
-        if [ "$TARGET" = "aarch64-pc-windows-gnullvm" ]; then
-            MINGW_TRIPLE="aarch64-w64-mingw32"
-            PACKAGES="mingw-w64-common"
-        else
-            MINGW_TRIPLE="x86_64-w64-mingw32"
-            PACKAGES="mingw-w64-x86-64-dev g++-mingw-w64-x86-64"
+    aarch64-pc-windows-gnullvm)
+        # Ubuntu does not package aarch64 MinGW libraries. Fetch llvm-mingw sysroot.
+        log "Downloading llvm-mingw sysroot for ARM64 Windows..."
+        LLVM_MINGW_URL="https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-ubuntu-22.04-x86_64.tar.xz"
+        fetch "$LLVM_MINGW_URL" "$WORK/llvm-mingw.tar.xz"
+        tar -xf "$WORK/llvm-mingw.tar.xz" -C "$WORK"
+        LLVM_ROOT="$(find "$WORK" -maxdepth 1 -type d -name "llvm-mingw*")"
+        if [ -d "$LLVM_ROOT/aarch64-w64-mingw32" ]; then
+            cp -a "$LLVM_ROOT/aarch64-w64-mingw32/include/." "$SYSROOT/usr/include/"
+            cp -a "$LLVM_ROOT/aarch64-w64-mingw32/lib/." "$SYSROOT/usr/lib/"
         fi
+        clean_sysroot "$SYSROOT"
+        pack_tarball "$SYSROOT" "$OUT_DIR/${TARGET}.tar.xz"
+        exit 0
+        ;;
+    x86_64-pc-windows-gnullvm)
+        MINGW_TRIPLE="x86_64-w64-mingw32"
+        PACKAGES="mingw-w64-x86-64-dev g++-mingw-w64-x86-64"
         ;;
     *)
         log_err "Unknown Windows GNU target: $TARGET"
