@@ -61,10 +61,10 @@ clean_sysroot() {
     find "$root" -type f -name "*.so*" -exec strip --strip-unneeded {} + 2>/dev/null || true
     find "$root" -type f -name "*.dylib" -exec strip -x {} + 2>/dev/null || true
 
-    # Sanitize GNU ld scripts (e.g. libc.so, libm.so) with hardcoded absolute host paths like /usr/<arch>/lib/
+    # Sanitize GNU ld scripts (e.g. libc.so, libm.so) with hardcoded absolute host paths like /usr/<arch>/lib64/ or /lib32/
     find "$root" -type f -name "*.so" | while read -r f; do
         if file "$f" | grep -q "ASCII text"; then
-            sed -i -E 's|/usr/[a-zA-Z0-9_-]+/lib/||g; s|/lib/[a-zA-Z0-9_-]+/||g' "$f"
+            sed -i -E 's|/usr/[a-zA-Z0-9_-]+/lib[0-9]*/||g; s|/usr/[a-zA-Z0-9_-]+/lib/||g; s|/usr/lib[0-9]*/||g; s|/lib[0-9]*/||g; s|/lib/||g' "$f"
         fi
     done
 }
