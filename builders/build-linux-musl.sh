@@ -60,15 +60,13 @@ log "Fetching musl sysroot for $TARGET ($MUSL_TARGET)..."
 PREBUILT_URL="https://musl.cc/${MUSL_TARGET}-cross.tgz"
 TGZ_FILE="$WORK/musl-cross.tgz"
 
-if curl --fail --location --retry 3 -sS -o "$TGZ_FILE" "$PREBUILT_URL" 2>/dev/null; then
+if curl --fail --location --retry 5 --retry-delay 3 --retry-all-errors -sS -o "$TGZ_FILE" "$PREBUILT_URL" 2>/dev/null; then
     tar -xzf "$TGZ_FILE" -C "$WORK"
     EXTRACTED_DIR="$WORK/${MUSL_TARGET}-cross/${MUSL_TARGET}"
     if [ -d "$EXTRACTED_DIR" ]; then
         cp -a "$EXTRACTED_DIR"/include/. "$SYSROOT/usr/include/"
         cp -a "$EXTRACTED_DIR"/lib/. "$SYSROOT/usr/lib/"
     fi
-    # Also copy libgcc and crtbegin/crtend from gcc directories
-    find "$WORK" -type f \( -name "crtbegin*.o" -o -name "crtend*.o" -o -name "libgcc*.a" \) -exec cp -a {} "$SYSROOT/usr/lib/" \; 2>/dev/null || true
 else
     log_warn "musl.cc prebuilt unavailable, building from source via musl-cross-make..."
     apt_install build-essential bison flex texinfo rsync
@@ -96,6 +94,9 @@ EOF
         cp -a "$TARGET_SYSROOT"/lib/. "$SYSROOT/usr/lib/" 2>/dev/null || true
     fi
 fi
+
+# In both prebuilt and built-from-source modes, ensure all gcc support files (crtbegin, crtend, libgcc) are copied
+find "$WORK" -type f \( -name "crtbegin*.o" -o -name "crtend*.o" -o -name "libgcc*.a" \) -exec cp -a {} "$SYSROOT/usr/lib/" \; 2>/dev/null || true
 
 # Fix ld-musl symlinks
 for loader in "$SYSROOT/usr/lib"/ld-musl-*.so.1; do
