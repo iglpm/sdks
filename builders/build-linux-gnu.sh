@@ -89,6 +89,10 @@ apt_install $PACKAGES
 # Locate installed cross sysroot files under /usr/$GNU_TRIPLE or multiarch paths
 if [ -d "/usr/$GNU_TRIPLE" ]; then
     cp -a /usr/"$GNU_TRIPLE"/lib/. "$SYSROOT/usr/lib/" 2>/dev/null || true
+    # SPARC64 ships its dynamic loader in lib64, separate from libc in lib.
+    if [ -d "/usr/$GNU_TRIPLE/lib64" ]; then
+        cp -a /usr/"$GNU_TRIPLE"/lib64/. "$SYSROOT/usr/lib/"
+    fi
     cp -a /usr/"$GNU_TRIPLE"/include/. "$SYSROOT/usr/include/" 2>/dev/null || true
 fi
 
@@ -121,7 +125,10 @@ if [ "$TARGET" = "i686-unknown-linux-gnu" ]; then
     fi
     if [ -d "/usr/include" ]; then
         # Copy standard headers if sysroot headers are missing
-        cp -a /usr/include/{stdio.h,stdlib.h,string.h,unistd.h,features.h,errno.h,fcntl.h,sys,bits,gnu} "$SYSROOT/usr/include/" 2>/dev/null || true
+        # libc6-dev-i386 shares the amd64 glibc headers. Copy their complete tree:
+        # bits/ and gnu/ can be links into x86_64-linux-gnu, and public headers
+        # include additional headers such as features-time64.h and endian.h.
+        cp -a /usr/include/. "$SYSROOT/usr/include/"
     fi
 fi
 
@@ -155,6 +162,11 @@ fi
 if [ ! -e "lib" ] && [ -d "usr/lib" ]; then
     ln -s usr/lib lib 2>/dev/null || true
 fi
+# The directory is created above, so the missing-path check alone leaves an
+# empty lib/ and QEMU cannot find /lib/ld-linux-*.so.*.
+if [ -d lib ] && [ ! -L lib ] && rmdir lib 2>/dev/null; then
+    ln -s usr/lib lib
+fi
 
 # Fix absolute symlinks in sysroot (e.g., libc.so pointing to /lib/...)
 find "$SYSROOT" -type l | while read -r symlink; do
@@ -169,4 +181,14 @@ find "$SYSROOT" -type l | while read -r symlink; do
 done
 
 clean_sysroot "$SYSROOT"
+
+# Some SPARC cross libc-dev packages omit the dynamic loader from libc.so's
+# linker group. Rust's TLS support references __tls_get_addr from that loader,
+# so include it explicitly just as native glibc linker scripts do.
+if [ "$TARGET" = "sparc64-unknown-linux-gnu" ] && \
+   [ -f "$SYSROOT/usr/lib/libc.so" ] && \
+   ! grep -q 'ld-linux.so.2' "$SYSROOT/usr/lib/libc.so"; then
+    sed -i 's| )$| AS_NEEDED ( ld-linux.so.2 ) )|' "$SYSROOT/usr/lib/libc.so"
+fi
+
 pack_tarball "$SYSROOT" "$OUT_DIR/${TARGET}.tar.xz"

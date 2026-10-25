@@ -73,7 +73,9 @@ log "Packaging Windows MinGW SDK for $TARGET ($MINGW_TRIPLE)..."
 apt_install $PACKAGES
 
 if [ -d "/usr/$MINGW_TRIPLE" ]; then
-    cp -a /usr/"$MINGW_TRIPLE"/include/. "$SYSROOT/usr/include/" 2>/dev/null || true
+    # Debian shares most headers via ../../share/mingw-w64/include symlinks.
+    # Dereference them so the standalone SDK does not point outside its tree.
+    cp -aL /usr/"$MINGW_TRIPLE"/include/. "$SYSROOT/usr/include/"
     cp -a /usr/"$MINGW_TRIPLE"/lib/. "$SYSROOT/usr/lib/" 2>/dev/null || true
 fi
 
