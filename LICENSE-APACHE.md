@@ -187,6 +187,7 @@
       identification within third-party archives.
 
    Copyright 2026 Jonas Franke
+   Copyrgith 2026 Hyprcross Contributors
    Copyright 2026 Igel Contributors
 
    Licensed under the Apache License, Version 2.0 (the "License");
