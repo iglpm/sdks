@@ -3,7 +3,7 @@
 [![Build & Release](https://github.com/runepm/sdks/actions/workflows/build-sdks.yml/badge.svg)](https://github.com/runepm/sdks/actions/workflows/build-sdks.yml)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT.md)
 
-This repository contains the build automation, packaging scripts, and release definitions for all cross-compilation target SDKs and sysroots used by [hyprcross](https://github.com/runepm/hyprcross) and [Rune](https://github.com/runepm/rune).
+This repository contains the build automation, packaging scripts, and release definitions for all cross-compilation target SDKs and sysroots used by [hyprcross](https://github.com/runepm/hyprcross) and [Igel](https://github.com/runepm/igel).
 
 ## Overview
 
